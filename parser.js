@@ -450,7 +450,9 @@ const astToValue = ast => {
   }
 };
 
+const parse = (text) => new JsonMachine(text, 0).parse();
+
 module.exports = {
-  JsonMachine,
-  astToValue
+  astToValue,
+  parse
 };
