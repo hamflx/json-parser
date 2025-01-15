@@ -10,20 +10,20 @@ const UpperZCharCode = "Z".charCodeAt(0);
 const isWhitespace = (char) => {
   const code = char.charCodeAt(0);
   const whitespaces = [
-    '\f',
-    '\n',
-    '\r',
-    '\t',
-    '\v',
-    '\u0020',
-    '\u00a0',
-    '\u1680',
-    '\u2028',
-    '\u2029',
-    '\u202f',
-    '\u205f',
-    '\u3000',
-    '\ufeff',
+    "\f",
+    "\n",
+    "\r",
+    "\t",
+    "\v",
+    "\u0020",
+    "\u00a0",
+    "\u1680",
+    "\u2028",
+    "\u2029",
+    "\u202f",
+    "\u205f",
+    "\u3000",
+    "\ufeff",
   ];
   return whitespaces.includes(char) || (code >= 0x2000 && code <= 0x200a);
 };
@@ -78,11 +78,11 @@ class Machine {
     if (this.char !== char) {
       if (this.eof) {
         throw new Error(
-          `expected ${char} but got end of file at ${this.offset}`
+          `expected ${char} but got end of file at ${this.offset}`,
         );
       }
       throw new Error(
-        `expected ${char} but got ${this.char} at ${this.offset}`
+        `expected ${char} but got ${this.char} at ${this.offset}`,
       );
     }
     this.advance();
@@ -174,7 +174,7 @@ class StringMachine extends Machine {
       type: "string",
       start: this.start,
       end: this.offset,
-      content: this.content
+      content: this.content,
     };
   }
 
@@ -287,7 +287,7 @@ class NumberMachine extends Machine {
       integer: this.integer,
       fraction: this.fraction,
       exponentNegative: this.exponentNegative,
-      exponent: this.exponent
+      exponent: this.exponent,
     };
   }
 
@@ -363,7 +363,7 @@ class ObjectMachine extends Machine {
       type: "object",
       start: this.start,
       end: this.offset,
-      properties: this.properties
+      properties: this.properties,
     };
   }
 
@@ -386,7 +386,7 @@ class ObjectMachine extends Machine {
       key: property,
       value,
       start: begin,
-      end: this.offset
+      end: this.offset,
     });
   }
 }
@@ -411,7 +411,7 @@ class ArrayMachine extends Machine {
       type: "array",
       start: this.start,
       end: this.offset,
-      elements: this.elements
+      elements: this.elements,
     };
   }
 
@@ -426,7 +426,7 @@ class ArrayMachine extends Machine {
   }
 }
 
-const astToValue = ast => {
+export const astToValue = (ast) => {
   switch (ast.type) {
     case "string":
       return ast.content;
@@ -442,17 +442,16 @@ const astToValue = ast => {
       return Number(numStr);
     }
     case "object":
-      return Object.fromEntries(ast.properties.map(property => [property.key.content, astToValue(property.value)]));
+      return Object.fromEntries(
+        ast.properties.map(
+          (property) => [property.key.content, astToValue(property.value)],
+        ),
+      );
     case "array":
-      return ast.elements.map(element => astToValue(element));
+      return ast.elements.map((element) => astToValue(element));
     default:
       throw new Error(`unknown ast type: ${ast.type}`);
   }
 };
 
-const parse = (text) => new JsonMachine(text, 0).parse();
-
-module.exports = {
-  astToValue,
-  parse
-};
+export const parse = (text) => new JsonMachine(text, 0).parse();
