@@ -31,6 +31,22 @@ describe("JSON Parser", () => {
     });
   });
 
+  describe("Booleans", () => {
+    test("parses true and false", () => {
+      expect(parseValue("true")).toBe(true);
+      expect(parseValue("false")).toBe(false);
+    });
+
+    test("throws on invalid booleans", () => {
+      expect(() => parseValue("tr")).toThrow();
+      expect(() => parseValue("fa")).toThrow();
+      expect(() => parseValue("True")).toThrow();
+      expect(() => parseValue("False")).toThrow();
+      expect(() => parseValue("TRUE")).toThrow();
+      expect(() => parseValue("FALSE")).toThrow();
+    });
+  });
+
   describe("Strings", () => {
     test("parses simple strings", () => {
       expect(parseValue('"hello"')).toBe("hello");
@@ -150,6 +166,64 @@ describe("JSON Parser", () => {
         "c":\n3
       }`;
       expect(parseValue(input)).toEqual({ a: 1, b: 2, c: 3 });
+    });
+  });
+
+  describe("Real world examples", () => {
+    test("Real world examples", () => {
+      const input = `
+      {
+        "uri": "https://vflow.vivo.xyz/",
+        "formData": {
+          "property1": "abc",
+          "property2": {
+            "property1": [
+              [
+                "sefwfwe",
+                "awqfew"
+              ],
+              {
+                "property1": "ffewfwe",
+                "property2": 6,
+                "property3": [
+                  "fewfwf",
+                  "fewfwf"
+                ],
+                "property5": true
+              },
+              "fewfwfw"
+            ],
+            "property2": "fewqgqwegewq"
+          },
+          "property3": "fewqfwqfwf"
+        }
+      }`;
+      expect(parseValue(input)).toEqual({
+        "uri": "https://vflow.vivo.xyz/",
+        "formData": {
+          "property1": "abc",
+          "property2": {
+            "property1": [
+              [
+                "sefwfwe",
+                "awqfew",
+              ],
+              {
+                "property1": "ffewfwe",
+                "property2": 6,
+                "property3": [
+                  "fewfwf",
+                  "fewfwf",
+                ],
+                "property5": true,
+              },
+              "fewfwfw",
+            ],
+            "property2": "fewqgqwegewq",
+          },
+          "property3": "fewqfwqfwf",
+        },
+      });
     });
   });
 });

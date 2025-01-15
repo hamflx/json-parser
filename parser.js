@@ -1,10 +1,6 @@
 const ZeroCharCode = "0".charCodeAt(0);
 const OneCharCode = "1".charCodeAt(0);
 const NineCharCode = "9".charCodeAt(0);
-const LowerACharCode = "a".charCodeAt(0);
-const LowerZCharCode = "z".charCodeAt(0);
-const UpperACharCode = "A".charCodeAt(0);
-const UpperZCharCode = "Z".charCodeAt(0);
 
 // [\f\n\r\t\v\u0020\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]
 const isWhitespace = (char) => {
@@ -36,14 +32,6 @@ const isDigitNoZero = (char) => {
 const isDigit = (char) => {
   const code = char.charCodeAt(0);
   return code >= ZeroCharCode && code <= NineCharCode;
-};
-
-const isAlphabetic = (char) => {
-  const code = char.charCodeAt(0);
-  return (
-    (code >= LowerACharCode && code <= LowerZCharCode) ||
-    (code >= UpperACharCode && code <= UpperZCharCode)
-  );
 };
 
 class Machine {
@@ -113,12 +101,23 @@ class Machine {
     return this.advanceNode(new ArrayMachine(this.text, this.offset).parse());
   }
 
+  parseBoolean() {
+    return this.advanceNode(new BooleanMachine(this.text, this.offset).parse());
+  }
+
+  parseNull() {
+    return this.advanceNode(new NullMachine(this.text, this.offset).parse());
+  }
+
   isValueChar() {
     return (
       this.char === "{" ||
       this.char === "[" ||
       this.char === '"' ||
       this.char === "-" ||
+      this.char === "t" ||
+      this.char === "f" ||
+      this.char === "n" ||
       isDigit(this.char)
     );
   }
@@ -134,6 +133,10 @@ class Machine {
       val = this.advanceNode(this.parseString());
     } else if (this.char === "-" || isDigit(this.char)) {
       val = this.advanceNode(this.parseNumber());
+    } else if (this.char === "t" || this.char === "f") {
+      val = this.advanceNode(this.parseBoolean());
+    } else if (this.char === "n") {
+      val = this.advanceNode(this.parseNull());
     } else {
       throw new Error("invalid value");
     }
@@ -383,6 +386,7 @@ class ObjectMachine extends Machine {
     this.eat(":");
     const value = this.parseValue();
     this.properties.push({
+      type: "property",
       key: property,
       value,
       start: begin,
@@ -426,8 +430,61 @@ class ArrayMachine extends Machine {
   }
 }
 
+class BooleanMachine extends Machine {
+  parse() {
+    let value = false;
+    if (this.char === "t") {
+      this.advance();
+      this.eat("r");
+      this.eat("u");
+      this.eat("e");
+      value = true;
+    } else if (this.char === "f") {
+      this.advance();
+      this.eat("a");
+      this.eat("l");
+      this.eat("s");
+      this.eat("e");
+    } else {
+      throw new Error("invalid boolean");
+    }
+    return this.emit(value);
+  }
+
+  emit(value) {
+    return {
+      type: "boolean",
+      start: this.start,
+      end: this.offset,
+      value,
+    };
+  }
+}
+
+class NullMachine extends Machine {
+  parse() {
+    this.eat("n");
+    this.eat("u");
+    this.eat("l");
+    this.eat("l");
+    return this.emit();
+  }
+
+  emit() {
+    return {
+      type: "null",
+      start: this.start,
+      end: this.offset,
+    };
+  }
+}
+
 export const astToValue = (ast) => {
   switch (ast.type) {
+    case "boolean":
+      return ast.value;
+    case "null":
+      return null;
     case "string":
       return ast.content;
     case "number": {
@@ -452,6 +509,30 @@ export const astToValue = (ast) => {
     default:
       throw new Error(`unknown ast type: ${ast.type}`);
   }
+};
+
+export const traverse = (node, fn) => {
+  const traverseImpl = (node, fn, paths) => {
+    if (fn({ node, paths }) === false) return;
+    if (node.type === "object") {
+      for (const property of node.properties) {
+        traverseImpl(property, fn, [...paths, {
+          node,
+          property: property.key.content,
+        }]);
+        traverseImpl(property.value, fn, [...paths, {
+          node,
+          property: property.key.content,
+        }]);
+      }
+    }
+    if (node.type === "array") {
+      for (let i = 0; i < node.elements.length; i++) {
+        traverseImpl(node.elements[i], fn, [...paths, { property: i, node }]);
+      }
+    }
+  };
+  traverseImpl(node, fn, []);
 };
 
 export const parse = (text) => new JsonMachine(text, 0).parse();
