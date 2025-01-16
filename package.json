@@ -1,14 +1,17 @@
 {
-  "name": "json-parser",
-  "module": "index.ts",
+  "name": "@hamflx/json-parser",
+  "version": "0.0.1",
+  "module": "lib/index.ts",
   "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
+  "private": false,
+  "publishConfig": {
+    "access": "public"
   },
-  "peerDependencies": {
+  "devDependencies": {
     "typescript": "^5.0.0"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc"
   }
 }

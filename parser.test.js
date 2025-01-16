@@ -1,4 +1,4 @@
-import { astToValue, parse } from "./parser.js";
+import { astToValue, parse } from "./index.js";
 
 describe("JSON Parser", () => {
   const parseValue = (input) => astToValue(parse(input));
